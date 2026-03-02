@@ -51,6 +51,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .frame(minWidth: 450, minHeight: 400)
+        .onAppear { NSApp.activate(ignoringOtherApps: true) }
     }
 }
 
