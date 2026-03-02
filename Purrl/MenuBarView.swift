@@ -47,8 +47,8 @@ struct MenuBarView: View {
         guard let entry = monitor.lastCleanedResult else {
             return "Last cleaned: none"
         }
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return "Last cleaned: \(formatter.localizedString(for: entry.date, relativeTo: .now))"
+        let domain = URL(string: entry.cleaned).flatMap(\.host) ?? "URL"
+        let n = entry.removedParams.count
+        return "Cleaned \(domain) (\(n) param\(n == 1 ? "" : "s"))"
     }
 }
