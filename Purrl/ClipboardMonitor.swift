@@ -76,7 +76,7 @@ final class ClipboardMonitor: ObservableObject {
             [String].self,
             from: (defaults.string(forKey: SettingsKeys.whitelistedDomains) ?? "[]").data(using: .utf8) ?? Data()
         )) ?? []
-        if let host = url.host, whitelistedDomains.contains(where: { host.hasSuffix($0) }) {
+        if let host = url.host, isWhitelisted(host: host, domains: whitelistedDomains) {
             return
         }
 
@@ -137,5 +137,21 @@ final class ClipboardMonitor: ObservableObject {
         }
 
         return url
+    }
+
+    private func isWhitelisted(host: String, domains: [String]) -> Bool {
+        let normalizedHost = host.lowercased()
+        let hostWithoutWWW = normalizedHost.hasPrefix("www.") ? String(normalizedHost.dropFirst(4)) : normalizedHost
+
+        return domains.contains { pattern in
+            let p = pattern.lowercased()
+
+            if p.hasPrefix("*.") {
+                let suffix = String(p.dropFirst(1)) // ".example.com"
+                return normalizedHost.hasSuffix(suffix) || hostWithoutWWW == String(p.dropFirst(2))
+            }
+
+            return hostWithoutWWW == p || normalizedHost == p
+        }
     }
 }
