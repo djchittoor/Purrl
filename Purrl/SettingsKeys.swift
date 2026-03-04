@@ -11,7 +11,6 @@ enum SettingsKeys {
     static let autoCleanEnabled = "autoCleanEnabled"
     static let showNotification = "showNotification"
 
-
     static let customBlockedParams = "customBlockedParams"
     static let whitelistedDomains = "whitelistedDomains"
     static let cleaningMode = "cleaningMode"
@@ -25,7 +24,6 @@ enum SettingsKeys {
         UserDefaults.standard.register(defaults: [
             autoCleanEnabled: true,
             showNotification: false,
-
 
             customBlockedParams: "[]",
             whitelistedDomains: "[]",

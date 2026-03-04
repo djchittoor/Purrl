@@ -101,10 +101,7 @@ final class ClipboardMonitor: ObservableObject {
               let url = validatedURL(from: string) else { return }
 
         // Check whitelist — whitelisted domains skip param cleaning but still get embed fixes
-        let whitelistedDomains: [String] = (try? JSONDecoder().decode(
-            [String].self,
-            from: (defaults.string(forKey: SettingsKeys.whitelistedDomains) ?? "[]").data(using: .utf8) ?? Data()
-        )) ?? []
+        let whitelistedDomains = decodeJSONSetting(defaults, key: SettingsKeys.whitelistedDomains)
         let isWhitelistedDomain = url.host.map { isWhitelisted(host: $0, domains: whitelistedDomains) } ?? false
 
         // Step 1: Clean tracking params (skip for whitelisted domains)
@@ -116,49 +113,41 @@ final class ClipboardMonitor: ObservableObject {
             if cleaningMode == "strict" {
                 cleanResult = URLSanitizer.sanitizeStrict(url.absoluteString)
             } else {
-                let customBlockedParams: [String] = (try? JSONDecoder().decode(
-                    [String].self,
-                    from: (defaults.string(forKey: SettingsKeys.customBlockedParams) ?? "[]").data(using: .utf8) ?? Data()
-                )) ?? []
+                let customBlockedParams = decodeJSONSetting(defaults, key: SettingsKeys.customBlockedParams)
                 cleanResult = URLSanitizer.sanitize(url.absoluteString, additionalParams: customBlockedParams)
             }
         }
 
         // Step 2: Apply embed fixes
-        var enabledPlatforms = Set<EmbedPlatform>()
-        if defaults.bool(forKey: SettingsKeys.embedFixTwitter) { enabledPlatforms.insert(.twitter) }
-        if defaults.bool(forKey: SettingsKeys.embedFixInstagram) { enabledPlatforms.insert(.instagram) }
-        if defaults.bool(forKey: SettingsKeys.embedFixReddit) { enabledPlatforms.insert(.reddit) }
-        if defaults.bool(forKey: SettingsKeys.embedFixBluesky) { enabledPlatforms.insert(.bluesky) }
+        let enabledPlatforms = enabledEmbedPlatforms(from: defaults)
 
-        let finalURL: String
+        // Combine param cleaning and embed fix results
+        let urlAfterClean: String
         let trueOriginal: String
         let finalRemovedParams: [String]
 
         if case .cleaned(let original, let cleaned, let removedParams) = cleanResult {
             trueOriginal = original
             finalRemovedParams = removedParams
-            if let embedResult = URLSanitizer.applyEmbedFixes(cleaned, platforms: enabledPlatforms),
-               case .cleaned(_, let embedCleaned, _) = embedResult {
-                finalURL = embedCleaned
-            } else {
-                finalURL = cleaned
-            }
+            urlAfterClean = cleaned
         } else {
-            // Params unchanged — try embed fixes on the original URL
-            let urlStr = url.absoluteString
-            if let embedResult = URLSanitizer.applyEmbedFixes(urlStr, platforms: enabledPlatforms),
-               case .cleaned(let original, let embedCleaned, _) = embedResult {
-                trueOriginal = original
-                finalURL = embedCleaned
-                finalRemovedParams = []
-            } else {
-                // Nothing changed at all
-                if isWhitelistedDomain {
-                    appendLog(LogEntry(date: .now, original: url.absoluteString, cleaned: nil, removedParams: [], skippedReason: "whitelisted"))
-                }
-                return
+            trueOriginal = url.absoluteString
+            finalRemovedParams = []
+            urlAfterClean = url.absoluteString
+        }
+
+        let finalURL: String
+        if let embedResult = URLSanitizer.applyEmbedFixes(urlAfterClean, platforms: enabledPlatforms),
+           case .cleaned(_, let embedCleaned, _) = embedResult {
+            finalURL = embedCleaned
+        } else if case .cleaned = cleanResult {
+            finalURL = urlAfterClean
+        } else {
+            // Nothing changed at all
+            if isWhitelistedDomain {
+                appendLog(LogEntry(date: .now, original: url.absoluteString, cleaned: nil, removedParams: [], skippedReason: "whitelisted"))
             }
+            return
         }
 
         // Debounce: wait 150ms before writing back
@@ -227,6 +216,23 @@ final class ClipboardMonitor: ObservableObject {
         if activityLog.count > 20 {
             activityLog.removeLast(activityLog.count - 20)
         }
+    }
+
+    private func decodeJSONSetting(_ defaults: UserDefaults, key: String) -> [String] {
+        (try? JSONDecoder().decode(
+            [String].self,
+            from: (defaults.string(forKey: key) ?? "[]").data(using: .utf8) ?? Data()
+        )) ?? []
+    }
+
+    private func enabledEmbedPlatforms(from defaults: UserDefaults) -> Set<EmbedPlatform> {
+        let platformKeys: [(String, EmbedPlatform)] = [
+            (SettingsKeys.embedFixTwitter, .twitter),
+            (SettingsKeys.embedFixInstagram, .instagram),
+            (SettingsKeys.embedFixReddit, .reddit),
+            (SettingsKeys.embedFixBluesky, .bluesky),
+        ]
+        return Set(platformKeys.compactMap { defaults.bool(forKey: $0.0) ? $0.1 : nil })
     }
 
     func isWhitelisted(host: String, domains: [String]) -> Bool {

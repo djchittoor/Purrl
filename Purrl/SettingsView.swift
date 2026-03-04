@@ -44,7 +44,6 @@ struct SettingsView: View {
                 ))
             }
 
-
             Section("Cleaning Mode") {
                 Picker("Mode", selection: $cleaningMode) {
                     Text("Standard").tag("standard")
@@ -73,7 +72,7 @@ struct SettingsView: View {
             }
 
             Section("Whitelisted Domains") {
-                Text("URLs from these domains will not be cleaned.")
+                Text("URLs from these domains skip param cleaning but still get embed fixes.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 TagInputView(tags: $whitelistedDomains, placeholder: "Add domain (e.g. example.com)...")
