@@ -116,6 +116,14 @@ struct URLSanitizer {
         "bsky.app": (.bluesky, "fxbsky.app"),
     ]
 
+    // Only transform URLs that point to actual posts/media, not profile or listing pages.
+    private static let embedPathRequirements: [EmbedPlatform: (String) -> Bool] = [
+        .twitter: { $0.contains("/status/") },
+        .instagram: { $0.hasPrefix("/p/") || $0.hasPrefix("/reel/") },
+        .reddit: { $0.contains("/comments/") },
+        .bluesky: { $0.contains("/post/") },
+    ]
+
     static func applyEmbedFixes(_ urlString: String, platforms: Set<EmbedPlatform>) -> SanitizeResult? {
         guard var components = URLComponents(string: urlString),
               let host = components.host else {
@@ -132,7 +140,8 @@ struct URLSanitizer {
         let hostWithoutWWW = normalizedHost.hasPrefix("www.") ? String(normalizedHost.dropFirst(4)) : normalizedHost
 
         guard let mapping = embedDomainMap[hostWithoutWWW],
-              platforms.contains(mapping.platform) else {
+              platforms.contains(mapping.platform),
+              embedPathRequirements[mapping.platform]?(components.path) == true else {
             return .unchanged(urlString)
         }
 
