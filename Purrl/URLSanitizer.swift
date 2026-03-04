@@ -28,8 +28,13 @@ struct URLSanitizer {
     static func sanitize(_ urlString: String, additionalParams: [String] = []) -> SanitizeResult? {
         let extraParams = Set(additionalParams.map { $0.lowercased() })
         guard var components = URLComponents(string: urlString),
-              components.host != nil else {
+              let host = components.host else {
             return nil
+        }
+
+        // Amazon product links: simplify to /dp/{productId} and strip all params
+        if let amazonResult = simplifyAmazonURL(components: &components, host: host, original: urlString) {
+            return amazonResult
         }
 
         guard let queryItems = components.queryItems, !queryItems.isEmpty else {
@@ -94,6 +99,25 @@ struct URLSanitizer {
         guard let cleaned = components.string else { return nil }
 
         return .cleaned(original: urlString, cleaned: cleaned, removedParams: removedParams)
+    }
+
+    private static let amazonProductPattern = /\/dp\/(\w+)/
+
+    private static func simplifyAmazonURL(components: inout URLComponents, host: String, original: String) -> SanitizeResult? {
+        guard host.contains("amazon"),
+              let match = components.path.firstMatch(of: amazonProductPattern) else {
+            return nil
+        }
+
+        let productId = String(match.1)
+        let cleanHost = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+        components.host = cleanHost
+        components.path = "/dp/\(productId)"
+        components.queryItems = nil
+
+        guard let cleaned = components.string else { return nil }
+        if cleaned == original { return .unchanged(original) }
+        return .cleaned(original: original, cleaned: cleaned, removedParams: [])
     }
 
     private static func isTrackingParam(_ name: String) -> Bool {

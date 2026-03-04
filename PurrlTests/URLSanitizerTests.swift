@@ -234,4 +234,52 @@ struct URLSanitizerTests {
     @Test func strictReturnsNilForInvalidURL() {
         #expect(URLSanitizer.sanitizeStrict("not a url") == nil)
     }
+
+    // MARK: - Amazon URL simplification
+
+    @Test func amazonDpLink() {
+        let result = URLSanitizer.sanitize("https://www.amazon.in/Apple-AirPods-4-Active-Noise-Cancellation/dp/B0FQFJBBVY/ref=sr_1_7?dib=stub&dib_tag=se&keywords=airpods&qid=1772608741&sr=8-7")
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://amazon.in/dp/B0FQFJBBVY")
+    }
+
+    @Test func amazonCountryDomain() {
+        let result = URLSanitizer.sanitize("https://www.amazon.com/Apple-AirPods-4-Active-Noise-Cancellation/dp/B0FQFB8FMG/ref=sr_1_5?dib=stub&dib_tag=se&keywords=airpods&qid=1772608972&sr=8-5")
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://amazon.com/dp/B0FQFB8FMG")
+    }
+
+    @Test func amazonNoWww() {
+        let result = URLSanitizer.sanitize("https://amazon.in/Apple-AirPods-4-Active-Noise-Cancellation/dp/B0FQFJBBVY?ref=sr_1_7&qid=123")
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://amazon.in/dp/B0FQFJBBVY")
+    }
+
+    @Test func amazonNonProductLink() {
+        // Non-product Amazon links should just get normal param cleaning
+        let result = URLSanitizer.sanitize("https://www.amazon.in/gp/help/customer/contact-us?utm_source=twitter&page=1")
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://www.amazon.in/gp/help/customer/contact-us?page=1")
+    }
+
+    @Test func amazonProductNoParams() {
+        let result = URLSanitizer.sanitize("https://www.amazon.in/dp/B0FQFJBBVY")
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://amazon.in/dp/B0FQFJBBVY")
+    }
 }
