@@ -16,6 +16,11 @@ enum SettingsKeys {
     static let whitelistedDomains = "whitelistedDomains"
     static let cleaningMode = "cleaningMode"
 
+    static let embedFixTwitter = "embedFixTwitter"
+    static let embedFixInstagram = "embedFixInstagram"
+    static let embedFixReddit = "embedFixReddit"
+    static let embedFixBluesky = "embedFixBluesky"
+
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
             autoCleanEnabled: true,
@@ -25,6 +30,11 @@ enum SettingsKeys {
             customBlockedParams: "[]",
             whitelistedDomains: "[]",
             cleaningMode: "standard",
+
+            embedFixTwitter: false,
+            embedFixInstagram: false,
+            embedFixReddit: false,
+            embedFixBluesky: false,
         ])
     }
 }

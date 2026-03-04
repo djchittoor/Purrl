@@ -12,6 +12,13 @@ enum SanitizeResult: Equatable {
     case cleaned(original: String, cleaned: String, removedParams: [String])
 }
 
+enum EmbedPlatform: Hashable, CaseIterable {
+    case twitter
+    case instagram
+    case reddit
+    case bluesky
+}
+
 struct URLSanitizer {
     private static let trackingParams: Set<String> = [
         "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_id",
@@ -99,6 +106,39 @@ struct URLSanitizer {
         guard let cleaned = components.string else { return nil }
 
         return .cleaned(original: urlString, cleaned: cleaned, removedParams: removedParams)
+    }
+
+    private static let embedDomainMap: [String: (platform: EmbedPlatform, target: String)] = [
+        "twitter.com": (.twitter, "fxtwitter.com"),
+        "x.com": (.twitter, "fxtwitter.com"),
+        "instagram.com": (.instagram, "zzinstagram.com"),
+        "reddit.com": (.reddit, "rxyddit.com"),
+        "bsky.app": (.bluesky, "fxbsky.app"),
+    ]
+
+    static func applyEmbedFixes(_ urlString: String, platforms: Set<EmbedPlatform>) -> SanitizeResult? {
+        guard var components = URLComponents(string: urlString),
+              let host = components.host else {
+            return nil
+        }
+
+        guard !platforms.isEmpty else {
+            return .unchanged(urlString)
+        }
+
+        // Only match bare domain and www. prefix; subdomains like old.reddit.com
+        // or m.twitter.com are intentionally excluded.
+        let normalizedHost = host.lowercased()
+        let hostWithoutWWW = normalizedHost.hasPrefix("www.") ? String(normalizedHost.dropFirst(4)) : normalizedHost
+
+        guard let mapping = embedDomainMap[hostWithoutWWW],
+              platforms.contains(mapping.platform) else {
+            return .unchanged(urlString)
+        }
+
+        components.host = mapping.target
+        guard let cleaned = components.string else { return nil }
+        return .cleaned(original: urlString, cleaned: cleaned, removedParams: [])
     }
 
     private static let amazonProductPattern = /\/dp\/(\w+)/

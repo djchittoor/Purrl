@@ -17,6 +17,11 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.customBlockedParams) private var customBlockedParams: [String] = []
     @AppStorage(SettingsKeys.whitelistedDomains) private var whitelistedDomains: [String] = []
 
+    @AppStorage(SettingsKeys.embedFixTwitter) private var embedFixTwitter = false
+    @AppStorage(SettingsKeys.embedFixInstagram) private var embedFixInstagram = false
+    @AppStorage(SettingsKeys.embedFixReddit) private var embedFixReddit = false
+    @AppStorage(SettingsKeys.embedFixBluesky) private var embedFixBluesky = false
+
     var body: some View {
         Form {
             Section("General") {
@@ -74,6 +79,16 @@ struct SettingsView: View {
                 TagInputView(tags: $whitelistedDomains, placeholder: "Add domain (e.g. example.com)...")
             }
 
+            Section("Embed Fixes") {
+                Text("Replace social media URLs with embed-friendly alternatives.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Toggle("Twitter/X → fxtwitter.com", isOn: $embedFixTwitter)
+                Toggle("Instagram → zzinstagram.com", isOn: $embedFixInstagram)
+                Toggle("Reddit → rxyddit.com", isOn: $embedFixReddit)
+                Toggle("Bluesky → fxbsky.app", isOn: $embedFixBluesky)
+            }
+
             Section {
                 Button("Reset to Defaults") {
                     autoCleanEnabled = true
@@ -84,6 +99,11 @@ struct SettingsView: View {
                     cleaningMode = "standard"
                     customBlockedParams = []
                     whitelistedDomains = []
+
+                    embedFixTwitter = false
+                    embedFixInstagram = false
+                    embedFixReddit = false
+                    embedFixBluesky = false
                 }
             }
         }

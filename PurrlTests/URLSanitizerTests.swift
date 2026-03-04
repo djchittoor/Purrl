@@ -283,3 +283,145 @@ struct URLSanitizerTests {
         #expect(cleaned == "https://amazon.in/dp/B0FQFJBBVY")
     }
 }
+
+struct EmbedFixTests {
+
+    // MARK: - Twitter/X
+
+    @Test func twitterDomainSwapped() {
+        let result = URLSanitizer.applyEmbedFixes("https://twitter.com/user/status/123", platforms: [.twitter])
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://fxtwitter.com/user/status/123")
+    }
+
+    @Test func xDomainSwapped() {
+        let result = URLSanitizer.applyEmbedFixes("https://x.com/user/status/123", platforms: [.twitter])
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://fxtwitter.com/user/status/123")
+    }
+
+    @Test func twitterDisabledNotSwapped() {
+        let result = URLSanitizer.applyEmbedFixes("https://twitter.com/user/status/123", platforms: [])
+        #expect(result == .unchanged("https://twitter.com/user/status/123"))
+    }
+
+    // MARK: - Instagram
+
+    @Test func instagramDomainSwapped() {
+        let result = URLSanitizer.applyEmbedFixes("https://instagram.com/p/abc123", platforms: [.instagram])
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://zzinstagram.com/p/abc123")
+    }
+
+    @Test func instagramDisabledNotSwapped() {
+        let result = URLSanitizer.applyEmbedFixes("https://instagram.com/p/abc123", platforms: [])
+        #expect(result == .unchanged("https://instagram.com/p/abc123"))
+    }
+
+    // MARK: - Reddit
+
+    @Test func redditDomainSwapped() {
+        let result = URLSanitizer.applyEmbedFixes("https://reddit.com/r/swift/comments/abc", platforms: [.reddit])
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://rxyddit.com/r/swift/comments/abc")
+    }
+
+    @Test func redditDisabledNotSwapped() {
+        let result = URLSanitizer.applyEmbedFixes("https://reddit.com/r/swift", platforms: [])
+        #expect(result == .unchanged("https://reddit.com/r/swift"))
+    }
+
+    // MARK: - Bluesky
+
+    @Test func blueskyDomainSwapped() {
+        let result = URLSanitizer.applyEmbedFixes("https://bsky.app/profile/user/post/abc", platforms: [.bluesky])
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://fxbsky.app/profile/user/post/abc")
+    }
+
+    @Test func blueskyDisabledNotSwapped() {
+        let result = URLSanitizer.applyEmbedFixes("https://bsky.app/profile/user", platforms: [])
+        #expect(result == .unchanged("https://bsky.app/profile/user"))
+    }
+
+    // MARK: - Edge cases
+
+    @Test func wwwPrefixStripped() {
+        let result = URLSanitizer.applyEmbedFixes("https://www.twitter.com/user/status/123", platforms: [.twitter])
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://fxtwitter.com/user/status/123")
+    }
+
+    @Test func pathAndQueryPreserved() {
+        let result = URLSanitizer.applyEmbedFixes("https://twitter.com/user/status/123?s=20", platforms: [.twitter])
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://fxtwitter.com/user/status/123?s=20")
+    }
+
+    @Test func fragmentPreserved() {
+        let result = URLSanitizer.applyEmbedFixes("https://reddit.com/r/swift#top", platforms: [.reddit])
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://rxyddit.com/r/swift#top")
+    }
+
+    @Test func noMatchReturnsUnchanged() {
+        let result = URLSanitizer.applyEmbedFixes("https://example.com/page", platforms: [.twitter, .reddit])
+        #expect(result == .unchanged("https://example.com/page"))
+    }
+
+    @Test func invalidURLReturnsNil() {
+        let result = URLSanitizer.applyEmbedFixes("not a url", platforms: [.twitter])
+        #expect(result == nil)
+    }
+
+    @Test func platformNotEnabledReturnsUnchanged() {
+        let result = URLSanitizer.applyEmbedFixes("https://twitter.com/user/status/123", platforms: [.instagram])
+        #expect(result == .unchanged("https://twitter.com/user/status/123"))
+    }
+
+    @Test func subdomainNotMatched() {
+        let result = URLSanitizer.applyEmbedFixes("https://old.reddit.com/r/swift", platforms: [.reddit])
+        #expect(result == .unchanged("https://old.reddit.com/r/swift"))
+    }
+
+    @Test func mobileSubdomainNotMatched() {
+        let result = URLSanitizer.applyEmbedFixes("https://m.twitter.com/user/status/123", platforms: [.twitter])
+        #expect(result == .unchanged("https://m.twitter.com/user/status/123"))
+    }
+
+    @Test func multiplePlatformsEnabled() {
+        let platforms: Set<EmbedPlatform> = [.twitter, .instagram, .reddit, .bluesky]
+        let r1 = URLSanitizer.applyEmbedFixes("https://twitter.com/a", platforms: platforms)
+        let r2 = URLSanitizer.applyEmbedFixes("https://reddit.com/r/b", platforms: platforms)
+        guard case .cleaned(_, let c1, _) = r1, case .cleaned(_, let c2, _) = r2 else {
+            Issue.record("Expected .cleaned results")
+            return
+        }
+        #expect(c1 == "https://fxtwitter.com/a")
+        #expect(c2 == "https://rxyddit.com/r/b")
+    }
+}

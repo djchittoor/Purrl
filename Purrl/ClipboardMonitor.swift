@@ -100,37 +100,73 @@ final class ClipboardMonitor: ObservableObject {
         guard let string = pasteboard.string(forType: .string),
               let url = validatedURL(from: string) else { return }
 
-        // Skip sanitization for whitelisted domains
+        // Check whitelist — whitelisted domains skip param cleaning but still get embed fixes
         let whitelistedDomains: [String] = (try? JSONDecoder().decode(
             [String].self,
             from: (defaults.string(forKey: SettingsKeys.whitelistedDomains) ?? "[]").data(using: .utf8) ?? Data()
         )) ?? []
-        if let host = url.host, isWhitelisted(host: host, domains: whitelistedDomains) {
-            appendLog(LogEntry(date: .now, original: url.absoluteString, cleaned: nil, removedParams: [], skippedReason: "whitelisted"))
-            return
-        }
+        let isWhitelistedDomain = url.host.map { isWhitelisted(host: $0, domains: whitelistedDomains) } ?? false
 
-        let cleaningMode = defaults.string(forKey: SettingsKeys.cleaningMode) ?? "standard"
-
-        let result: SanitizeResult?
-        if cleaningMode == "strict" {
-            result = URLSanitizer.sanitizeStrict(url.absoluteString)
+        // Step 1: Clean tracking params (skip for whitelisted domains)
+        let cleanResult: SanitizeResult?
+        if isWhitelistedDomain {
+            cleanResult = .unchanged(url.absoluteString)
         } else {
-            let customBlockedParams: [String] = (try? JSONDecoder().decode(
-                [String].self,
-                from: (defaults.string(forKey: SettingsKeys.customBlockedParams) ?? "[]").data(using: .utf8) ?? Data()
-            )) ?? []
-            result = URLSanitizer.sanitize(url.absoluteString, additionalParams: customBlockedParams)
+            let cleaningMode = defaults.string(forKey: SettingsKeys.cleaningMode) ?? "standard"
+            if cleaningMode == "strict" {
+                cleanResult = URLSanitizer.sanitizeStrict(url.absoluteString)
+            } else {
+                let customBlockedParams: [String] = (try? JSONDecoder().decode(
+                    [String].self,
+                    from: (defaults.string(forKey: SettingsKeys.customBlockedParams) ?? "[]").data(using: .utf8) ?? Data()
+                )) ?? []
+                cleanResult = URLSanitizer.sanitize(url.absoluteString, additionalParams: customBlockedParams)
+            }
         }
 
-        guard case .cleaned(let original, let cleaned, let removedParams) = result else { return }
+        // Step 2: Apply embed fixes
+        var enabledPlatforms = Set<EmbedPlatform>()
+        if defaults.bool(forKey: SettingsKeys.embedFixTwitter) { enabledPlatforms.insert(.twitter) }
+        if defaults.bool(forKey: SettingsKeys.embedFixInstagram) { enabledPlatforms.insert(.instagram) }
+        if defaults.bool(forKey: SettingsKeys.embedFixReddit) { enabledPlatforms.insert(.reddit) }
+        if defaults.bool(forKey: SettingsKeys.embedFixBluesky) { enabledPlatforms.insert(.bluesky) }
+
+        let finalURL: String
+        let trueOriginal: String
+        let finalRemovedParams: [String]
+
+        if case .cleaned(let original, let cleaned, let removedParams) = cleanResult {
+            trueOriginal = original
+            finalRemovedParams = removedParams
+            if let embedResult = URLSanitizer.applyEmbedFixes(cleaned, platforms: enabledPlatforms),
+               case .cleaned(_, let embedCleaned, _) = embedResult {
+                finalURL = embedCleaned
+            } else {
+                finalURL = cleaned
+            }
+        } else {
+            // Params unchanged — try embed fixes on the original URL
+            let urlStr = url.absoluteString
+            if let embedResult = URLSanitizer.applyEmbedFixes(urlStr, platforms: enabledPlatforms),
+               case .cleaned(let original, let embedCleaned, _) = embedResult {
+                trueOriginal = original
+                finalURL = embedCleaned
+                finalRemovedParams = []
+            } else {
+                // Nothing changed at all
+                if isWhitelistedDomain {
+                    appendLog(LogEntry(date: .now, original: url.absoluteString, cleaned: nil, removedParams: [], skippedReason: "whitelisted"))
+                }
+                return
+            }
+        }
 
         // Debounce: wait 150ms before writing back
         debounceTimer?.cancel()
         debounceTimer = Just(())
             .delay(for: .milliseconds(150), scheduler: RunLoop.main)
             .sink { [weak self] _ in
-                self?.writeCleanedURL(original: original, cleaned: cleaned, removedParams: removedParams)
+                self?.writeCleanedURL(original: trueOriginal, cleaned: finalURL, removedParams: finalRemovedParams)
             }
     }
 
