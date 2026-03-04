@@ -78,8 +78,13 @@ struct URLSanitizer {
 
     static func sanitizeStrict(_ urlString: String) -> SanitizeResult? {
         guard var components = URLComponents(string: urlString),
-              components.host != nil else {
+              let host = components.host else {
             return nil
+        }
+
+        // Amazon product links: simplify to /dp/{productId} and strip all params
+        if let amazonResult = simplifyAmazonURL(components: &components, host: host, original: urlString) {
+            return amazonResult
         }
 
         guard let queryItems = components.queryItems, !queryItems.isEmpty else {

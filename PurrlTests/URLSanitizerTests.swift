@@ -282,6 +282,15 @@ struct URLSanitizerTests {
         }
         #expect(cleaned == "https://amazon.in/dp/B0FQFJBBVY")
     }
+
+    @Test func strictAmazonDpLink() {
+        let result = URLSanitizer.sanitizeStrict("https://www.amazon.com/Apple-AirPods-4/dp/B0FQFB8FMG/ref=sr_1_5?dib=stub&keywords=airpods&qid=123&sr=8-5")
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://amazon.com/dp/B0FQFB8FMG")
+    }
 }
 
 struct EmbedFixTests {
