@@ -10,7 +10,6 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage(SettingsKeys.autoCleanEnabled) private var autoCleanEnabled = true
-    @AppStorage(SettingsKeys.showNotification) private var showNotification = false
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     @AppStorage(SettingsKeys.cleaningMode) private var cleaningMode = "standard"
@@ -26,7 +25,6 @@ struct SettingsView: View {
         Form {
             Section("General") {
                 Toggle("Auto-clean URLs from clipboard", isOn: $autoCleanEnabled)
-                Toggle("Show notification when URL is cleaned", isOn: $showNotification)
                 Toggle("Launch at login", isOn: Binding(
                     get: { launchAtLogin },
                     set: { newValue in
@@ -91,7 +89,6 @@ struct SettingsView: View {
             Section {
                 Button("Reset to Defaults") {
                     autoCleanEnabled = true
-                    showNotification = false
                     try? SMAppService.mainApp.unregister()
                     launchAtLogin = false
 
