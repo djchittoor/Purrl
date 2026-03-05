@@ -32,6 +32,7 @@ jobs:
         run: |
           mkdir -p build/dmg
           cp -R build/Purrl.xcarchive/Products/Applications/Purrl.app build/dmg/
+          ln -s /Applications build/dmg/Applications
 
           hdiutil create \
             -volname "Purrl" \
