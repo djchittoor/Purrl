@@ -1,0 +1,16 @@
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run test
+        run: |
+          set -o pipefail && xcodebuild test \
+            -project Purrl.xcodeproj \
+            -scheme Purrl \
+            -destination 'platform=macOS'
