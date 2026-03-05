@@ -8,9 +8,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run test
+      - name: Install xcpretty
+        run: gem install xcpretty
+
+      - name: Run tests
         run: |
-          set -o pipefail && xcodebuild test \
+          set -o pipefail
+          xcodebuild test \
             -project Purrl.xcodeproj \
             -scheme Purrl \
-            -destination 'platform=macOS'
+            -destination 'platform=macOS,arch=arm64' \
+          | xcpretty -c
