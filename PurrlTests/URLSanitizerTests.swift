@@ -328,7 +328,7 @@ struct EmbedFixTests {
             Issue.record("Expected .cleaned result")
             return
         }
-        #expect(cleaned == "https://zzinstagram.com/p/abc123")
+        #expect(cleaned == "https://fxstagram.com/p/abc123")
     }
 
     @Test func instagramDisabledNotSwapped() {
@@ -425,7 +425,43 @@ struct EmbedFixTests {
             Issue.record("Expected .cleaned result")
             return
         }
-        #expect(cleaned == "https://zzinstagram.com/reel/abc123")
+        #expect(cleaned == "https://fxstagram.com/reel/abc123")
+    }
+
+    @Test func instagramReelsSwapped() {
+        let result = URLSanitizer.applyEmbedFixes("https://instagram.com/reels/abc123", platforms: [.instagram])
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://fxstagram.com/reels/abc123")
+    }
+
+    @Test func instagramUsernamePostSwapped() {
+        let result = URLSanitizer.applyEmbedFixes("https://instagram.com/zuck/p/abc123", platforms: [.instagram])
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://fxstagram.com/zuck/p/abc123")
+    }
+
+    @Test func instagramUsernameReelSwapped() {
+        let result = URLSanitizer.applyEmbedFixes("https://instagram.com/zuck/reel/abc123", platforms: [.instagram])
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://fxstagram.com/zuck/reel/abc123")
+    }
+
+    @Test func instagramSharePostSwapped() {
+        let result = URLSanitizer.applyEmbedFixes("https://instagram.com/share/p/abc123", platforms: [.instagram])
+        guard case .cleaned(_, let cleaned, _) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://fxstagram.com/share/p/abc123")
     }
 
     @Test func redditSubredditNotSwapped() {

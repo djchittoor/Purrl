@@ -12,7 +12,7 @@ A lightweight macOS menu bar utility that quietly lives in the background, autom
   - **Strict:** Removes everything except a strictly whitelisted set of parameters (like `q`, `id`, `v`, `page`, etc.).
 - **Social Embed Fixes:** Automatically transforms social media links to their embed-friendly equivalents, perfect for sharing on platforms like Discord:
   - `twitter.com` & `x.com` -> `fxtwitter.com`
-  - `instagram.com` -> `zzinstagram.com`
+  - `instagram.com` -> `fxstagram.com`
   - `reddit.com` -> `rxddit.com`
   - `bsky.app` -> `fxbsky.app`
 - **Amazon Link Simplification:** Automatically simplifies sprawling Amazon product links to just the core `/dp/{productId}` path, removing all extraneous junk.

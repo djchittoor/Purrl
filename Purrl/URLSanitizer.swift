@@ -116,7 +116,7 @@ struct URLSanitizer {
     private static let embedDomainMap: [String: (platform: EmbedPlatform, target: String)] = [
         "twitter.com": (.twitter, "fxtwitter.com"),
         "x.com": (.twitter, "fxtwitter.com"),
-        "instagram.com": (.instagram, "zzinstagram.com"),
+        "instagram.com": (.instagram, "fxstagram.com"),
         "reddit.com": (.reddit, "rxddit.com"),
         "bsky.app": (.bluesky, "fxbsky.app"),
     ]
@@ -124,7 +124,7 @@ struct URLSanitizer {
     // Only transform URLs that point to actual posts/media, not profile or listing pages.
     private static let embedPathRequirements: [EmbedPlatform: (String) -> Bool] = [
         .twitter: { $0.contains("/status/") },
-        .instagram: { $0.hasPrefix("/p/") || $0.hasPrefix("/reel/") },
+        .instagram: { $0.contains("/p/") || $0.contains("/reel/") || $0.contains("/reels/") },
         .reddit: { $0.contains("/comments/") },
         .bluesky: { $0.contains("/post/") },
     ]
