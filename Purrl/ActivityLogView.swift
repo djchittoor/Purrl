@@ -15,7 +15,7 @@ struct ActivityLogView: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                List(monitor.activityLog) { entry in
+                List(monitor.activityLog.reversed()) { entry in
                     ActivityLogRow(entry: entry)
                 }
             }

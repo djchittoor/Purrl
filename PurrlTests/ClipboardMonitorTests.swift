@@ -216,12 +216,12 @@ struct ActivityLogTests {
         #expect(m.activityLog.count == 2)
     }
 
-    @Test func logPrependsNewestFirst() {
+    @Test func logAppendsNewestLast() {
         let m = monitor()
         m.appendLog(makeEntry(original: "https://first.com"))
         m.appendLog(makeEntry(original: "https://second.com"))
-        #expect(m.activityLog[0].original == "https://second.com")
-        #expect(m.activityLog[1].original == "https://first.com")
+        #expect(m.activityLog[0].original == "https://first.com")
+        #expect(m.activityLog[1].original == "https://second.com")
     }
 
     @Test func logRotatesAt20() {
@@ -237,17 +237,17 @@ struct ActivityLogTests {
         for i in 0..<25 {
             m.appendLog(makeEntry(original: "https://\(i).com"))
         }
-        // Newest entry (i=24) should be first
-        #expect(m.activityLog[0].original == "https://24.com")
-        // Oldest kept entry (i=5) should be last
-        #expect(m.activityLog[19].original == "https://5.com")
+        // Oldest kept entry (i=5) should be first
+        #expect(m.activityLog[0].original == "https://5.com")
+        // Newest entry (i=24) should be last
+        #expect(m.activityLog[19].original == "https://24.com")
     }
 
     @Test func logDistinguishesCleanedAndSkipped() {
         let m = monitor()
         m.appendLog(makeEntry(cleaned: "https://clean.com", skippedReason: nil))
         m.appendLog(makeEntry(skippedReason: "whitelisted"))
-        #expect(m.activityLog[0].skippedReason == "whitelisted")
-        #expect(m.activityLog[1].skippedReason == nil)
+        #expect(m.activityLog[0].skippedReason == nil)
+        #expect(m.activityLog[1].skippedReason == "whitelisted")
     }
 }

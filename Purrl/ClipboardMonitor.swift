@@ -212,9 +212,9 @@ final class ClipboardMonitor: ObservableObject {
     }
 
     func appendLog(_ entry: LogEntry) {
-        activityLog.insert(entry, at: 0)
+        activityLog.append(entry)
         if activityLog.count > 20 {
-            activityLog.removeLast(activityLog.count - 20)
+            activityLog.removeFirst(activityLog.count - 20)
         }
     }
 
