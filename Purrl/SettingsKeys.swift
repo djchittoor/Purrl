@@ -19,18 +19,27 @@ enum SettingsKeys {
     static let embedFixReddit = "embedFixReddit"
     static let embedFixBluesky = "embedFixBluesky"
 
+    // MARK: - Default values (single source of truth)
+
+    static let defaultAutoCleanEnabled = true
+    static let defaultCleaningMode = "standard"
+    static let defaultEmbedFixTwitter = false
+    static let defaultEmbedFixInstagram = false
+    static let defaultEmbedFixReddit = false
+    static let defaultEmbedFixBluesky = false
+
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
-            autoCleanEnabled: true,
+            autoCleanEnabled: defaultAutoCleanEnabled,
 
             customBlockedParams: "[]",
             whitelistedDomains: "[]",
-            cleaningMode: "standard",
+            cleaningMode: defaultCleaningMode,
 
-            embedFixTwitter: false,
-            embedFixInstagram: false,
-            embedFixReddit: false,
-            embedFixBluesky: false,
+            embedFixTwitter: defaultEmbedFixTwitter,
+            embedFixInstagram: defaultEmbedFixInstagram,
+            embedFixReddit: defaultEmbedFixReddit,
+            embedFixBluesky: defaultEmbedFixBluesky,
         ])
     }
 }

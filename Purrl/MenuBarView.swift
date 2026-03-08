@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MenuBarView: View {
     @ObservedObject var monitor: ClipboardMonitor
-    @AppStorage(SettingsKeys.autoCleanEnabled) private var autoCleanEnabled = true
+    @AppStorage(SettingsKeys.autoCleanEnabled) private var autoCleanEnabled = SettingsKeys.defaultAutoCleanEnabled
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {

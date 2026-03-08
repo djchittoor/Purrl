@@ -9,17 +9,17 @@ import ServiceManagement
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage(SettingsKeys.autoCleanEnabled) private var autoCleanEnabled = true
+    @AppStorage(SettingsKeys.autoCleanEnabled) private var autoCleanEnabled = SettingsKeys.defaultAutoCleanEnabled
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
-    @AppStorage(SettingsKeys.cleaningMode) private var cleaningMode = "standard"
+    @AppStorage(SettingsKeys.cleaningMode) private var cleaningMode = SettingsKeys.defaultCleaningMode
     @AppStorage(SettingsKeys.customBlockedParams) private var customBlockedParams: [String] = []
     @AppStorage(SettingsKeys.whitelistedDomains) private var whitelistedDomains: [String] = []
 
-    @AppStorage(SettingsKeys.embedFixTwitter) private var embedFixTwitter = false
-    @AppStorage(SettingsKeys.embedFixInstagram) private var embedFixInstagram = false
-    @AppStorage(SettingsKeys.embedFixReddit) private var embedFixReddit = false
-    @AppStorage(SettingsKeys.embedFixBluesky) private var embedFixBluesky = false
+    @AppStorage(SettingsKeys.embedFixTwitter) private var embedFixTwitter = SettingsKeys.defaultEmbedFixTwitter
+    @AppStorage(SettingsKeys.embedFixInstagram) private var embedFixInstagram = SettingsKeys.defaultEmbedFixInstagram
+    @AppStorage(SettingsKeys.embedFixReddit) private var embedFixReddit = SettingsKeys.defaultEmbedFixReddit
+    @AppStorage(SettingsKeys.embedFixBluesky) private var embedFixBluesky = SettingsKeys.defaultEmbedFixBluesky
 
     var body: some View {
         Form {
@@ -88,18 +88,18 @@ struct SettingsView: View {
 
             Section {
                 Button("Reset to Defaults") {
-                    autoCleanEnabled = true
+                    autoCleanEnabled = SettingsKeys.defaultAutoCleanEnabled
                     try? SMAppService.mainApp.unregister()
                     launchAtLogin = false
 
-                    cleaningMode = "standard"
+                    cleaningMode = SettingsKeys.defaultCleaningMode
                     customBlockedParams = []
                     whitelistedDomains = []
 
-                    embedFixTwitter = false
-                    embedFixInstagram = false
-                    embedFixReddit = false
-                    embedFixBluesky = false
+                    embedFixTwitter = SettingsKeys.defaultEmbedFixTwitter
+                    embedFixInstagram = SettingsKeys.defaultEmbedFixInstagram
+                    embedFixReddit = SettingsKeys.defaultEmbedFixReddit
+                    embedFixBluesky = SettingsKeys.defaultEmbedFixBluesky
                 }
             }
         }
