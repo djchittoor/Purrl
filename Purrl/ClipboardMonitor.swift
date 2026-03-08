@@ -237,18 +237,17 @@ final class ClipboardMonitor: ObservableObject {
 
     func isWhitelisted(host: String, domains: [String]) -> Bool {
         let normalizedHost = host.lowercased()
-        let hostWithoutWWW = normalizedHost.hasPrefix("www.") ? String(normalizedHost.dropFirst(4)) : normalizedHost
+        let hostStripped = host.hostWithoutWWW
 
         return domains.contains { pattern in
             let p = pattern.lowercased()
 
             if p.hasPrefix("*.") {
                 let suffix = String(p.dropFirst(1)) // ".example.com"
-                return normalizedHost.hasSuffix(suffix) || hostWithoutWWW == String(p.dropFirst(2))
+                return normalizedHost.hasSuffix(suffix) || hostStripped == String(p.dropFirst(2))
             }
 
-            let patternWithoutWWW = p.hasPrefix("www.") ? String(p.dropFirst(4)) : p
-            return hostWithoutWWW == patternWithoutWWW
+            return hostStripped == pattern.hostWithoutWWW
         }
     }
 }

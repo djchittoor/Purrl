@@ -52,7 +52,7 @@ struct MenuBarView: View {
         guard let entry = monitor.lastCleanedResult else {
             return "Last cleaned: none"
         }
-        let domain = URL(string: entry.cleaned).flatMap(\.host) ?? "URL"
+        let domain = URL(string: entry.cleaned)?.host?.hostWithoutWWW ?? "URL"
         let n = entry.removedParams.count
         return "Cleaned \(domain) (\(n) param\(n == 1 ? "" : "s"))"
     }

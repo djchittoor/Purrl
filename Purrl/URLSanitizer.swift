@@ -7,6 +7,13 @@
 
 import Foundation
 
+extension String {
+    var hostWithoutWWW: String {
+        let lowered = self.lowercased()
+        return lowered.hasPrefix("www.") ? String(lowered.dropFirst(4)) : lowered
+    }
+}
+
 enum SanitizeResult: Equatable {
     case unchanged(String)
     case cleaned(original: String, cleaned: String, removedParams: [String])
@@ -154,10 +161,7 @@ struct URLSanitizer {
 
         // Only match bare domain and www. prefix; subdomains like old.reddit.com
         // or m.twitter.com are intentionally excluded.
-        let normalizedHost = host.lowercased()
-        let hostWithoutWWW = normalizedHost.hasPrefix("www.") ? String(normalizedHost.dropFirst(4)) : normalizedHost
-
-        guard let mapping = embedDomainMap[hostWithoutWWW],
+        guard let mapping = embedDomainMap[host.hostWithoutWWW],
               platforms.contains(mapping.platform),
               embedPathRequirements[mapping.platform]?(components.path) == true else {
             return .unchanged(urlString)
@@ -177,8 +181,7 @@ struct URLSanitizer {
         }
 
         let productId = String(match.1)
-        let cleanHost = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
-        components.host = cleanHost
+        components.host = host.hostWithoutWWW
         components.path = "/dp/\(productId)"
         components.queryItems = nil
 

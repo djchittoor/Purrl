@@ -47,7 +47,7 @@ private struct ActivityLogRow: View {
     }
 
     private var domain: String {
-        URL(string: entry.original).flatMap(\.host) ?? "unknown"
+        URL(string: entry.original)?.host?.hostWithoutWWW ?? "unknown"
     }
 
     private var subtitle: String {
