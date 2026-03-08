@@ -71,9 +71,22 @@ struct URLSanitizer {
     }
 
     private static let allowedParams: Set<String> = [
-        "q", "query", "search", "v", "id", "p", "pid", "page", "start", "offset",
-        "t", "time", "timestamp", "sort", "order", "orderby", "lang", "locale", "hl",
-        "tab", "section", "view", "limit", "per_page", "count", "format", "type",
+        // Search / query
+        "q", "query", "search", "k", "s", "i",
+        // Content identifiers
+        "v", "id", "p", "pid",
+        // Pagination
+        "page", "start", "offset", "limit", "per_page", "count", "n", "size",
+        // Sorting / ordering
+        "sort", "order", "orderby",
+        // Localization
+        "lang", "locale", "hl",
+        // Navigation / layout
+        "tab", "section", "view", "format", "type",
+        // Filtering
+        "category", "cat", "tag", "filter", "from", "to", "min", "max",
+        // Time
+        "t", "time", "timestamp",
     ]
 
     static func sanitizeStrict(_ urlString: String) -> SanitizeResult? {

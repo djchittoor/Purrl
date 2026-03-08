@@ -231,6 +231,16 @@ struct URLSanitizerTests {
         #expect(cleaned == "https://example.com?Q=swift")
     }
 
+    @Test func strictKeepsSearchKeywordParam() {
+        let result = URLSanitizer.sanitizeStrict("https://www.amazon.com/s?k=small+table&crid=35AE&sprefix=small&ref=nb_sb")
+        guard case .cleaned(_, let cleaned, let removed) = result else {
+            Issue.record("Expected .cleaned result")
+            return
+        }
+        #expect(cleaned == "https://www.amazon.com/s?k=small+table")
+        #expect(Set(removed) == Set(["crid", "sprefix", "ref"]))
+    }
+
     @Test func strictReturnsNilForInvalidURL() {
         #expect(URLSanitizer.sanitizeStrict("not a url") == nil)
     }
