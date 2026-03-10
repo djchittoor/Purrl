@@ -34,10 +34,16 @@ final class ClipboardMonitor: ObservableObject {
     private var debounceTimer: AnyCancellable?
     private var iconResetTimer: AnyCancellable?
     private var terminationObserver: Any?
+    private var activity: NSObjectProtocol?
     private var lastChangeCount: Int
 
     init() {
         lastChangeCount = NSPasteboard.general.changeCount
+        start()
+    }
+
+    deinit {
+        stop()
     }
 
     func start() {
@@ -48,6 +54,11 @@ final class ClipboardMonitor: ObservableObject {
         source.setEventHandler { [weak self] in self?.checkClipboard() }
         source.activate()
         timer = source
+
+        activity = ProcessInfo.processInfo.beginActivity(
+            options: .userInitiated,
+            reason: "Monitoring clipboard for URL cleaning"
+        )
 
         terminationObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification,
@@ -63,6 +74,10 @@ final class ClipboardMonitor: ObservableObject {
         if let observer = terminationObserver {
             NotificationCenter.default.removeObserver(observer)
             terminationObserver = nil
+        }
+        if let activity {
+            ProcessInfo.processInfo.endActivity(activity)
+            self.activity = nil
         }
     }
 

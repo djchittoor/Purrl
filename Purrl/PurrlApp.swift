@@ -18,7 +18,6 @@ struct PurrlApp: App {
     var body: some Scene {
         MenuBarExtra {
             MenuBarView(monitor: clipboardMonitor)
-                .onAppear { clipboardMonitor.start() }
         } label: {
             Image(systemName: clipboardMonitor.menuBarIcon)
         }
